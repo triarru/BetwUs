@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Space {
+  id              String    @id @default(cuid())
+  startedOn       String?
+  inviteCode      String?   @unique
+  inviteExpiresAt DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  users           User[]
+  media           Media[]
+  journals        JournalEntry[]
+  notes           Note[]
+  moods           Mood[]
+  moments         Moment[]
+  dateIdeas       DateIdea[]
+  wishlistItems   WishlistItem[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  displayName  String
+  spaceId      String?
+  createdAt    DateTime @default(now())
+  space        Space?   @relation(fields: [spaceId], references: [id])
+
+  media           Media[]
+  journals        JournalEntry[]
+  sentNotes       Note[]          @relation("NoteSender")
+  receivedNotes   Note[]          @relation("NoteRecipient")
+  moods           Mood[]
+  dateIdeas       DateIdea[]
+  dateVotes       DateVote[]
+  wishlistOwned   WishlistItem[]  @relation("WishlistOwner")
+  wishlistGifted  WishlistItem[]  @relation("WishlistGifter")
+}
+
+model Media {
+  id        String   @id @default(cuid())
+  spaceId   String
+  authorId  String
+  day       String
+  caption   String   @default("")
+  frame     String   @default("polaroid")
+  stickers  String   @default("[]")
+  type      String
+  fileName  String
+  mimeType  String
+  momentId  String?
+  createdAt DateTime @default(now())
+  space     Space    @relation(fields: [spaceId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id])
+  moment    Moment?  @relation(fields: [momentId], references: [id])
+}
+
+model JournalEntry {
+  id        String   @id @default(cuid())
+  spaceId   String
+  authorId  String
+  day       String
+  body      String
+  updatedAt DateTime @updatedAt
+  space     Space    @relation(fields: [spaceId], references: [id])
+  author    User     @relation(fields: [authorId], references: [id])
+
+  @@unique([spaceId, authorId, day])
+}
+
+model Note {
+  id          String    @id @default(cuid())
+  spaceId     String
+  senderId    String
+  recipientId String
+  kind        String    @default("sticky")
+  body        String
+  day         String?
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+  space       Space     @relation(fields: [spaceId], references: [id])
+  sender      User      @relation("NoteSender", fields: [senderId], references: [id])
+  recipient   User      @relation("NoteRecipient", fields: [recipientId], references: [id])
+}
+
+model Mood {
+  id       String @id @default(cuid())
+  spaceId  String
+  authorId String
+  day      String
+  emoji    String
+  space    Space  @relation(fields: [spaceId], references: [id])
+  author   User   @relation(fields: [authorId], references: [id])
+
+  @@unique([spaceId, authorId, day])
+}
+
+model Moment {
+  id        String   @id @default(cuid())
+  spaceId   String
+  name      String
+  startDay  String
+  endDay    String
+  createdAt DateTime @default(now())
+  space     Space    @relation(fields: [spaceId], references: [id])
+  media     Media[]
+}
+
+model DateIdea {
+  id        String     @id @default(cuid())
+  spaceId   String
+  authorId  String
+  title     String
+  doneAt    DateTime?
+  createdAt DateTime   @default(now())
+  space     Space      @relation(fields: [spaceId], references: [id])
+  author    User       @relation(fields: [authorId], references: [id])
+  votes     DateVote[]
+}
+
+model DateVote {
+  id        String   @id @default(cuid())
+  ideaId    String
+  userId    String
+  weekStart String
+  idea      DateIdea @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, weekStart])
+}
+
+model WishlistItem {
+  id        String    @id @default(cuid())
+  spaceId   String
+  ownerId   String
+  title     String
+  note      String    @default("")
+  url       String    @default("")
+  giftedAt  DateTime?
+  giftedById String?
+  createdAt DateTime  @default(now())
+  space     Space     @relation(fields: [spaceId], references: [id])
+  owner     User      @relation("WishlistOwner", fields: [ownerId], references: [id])
+  giftedBy  User?     @relation("WishlistGifter", fields: [giftedById], references: [id])
+}
