@@ -1,6 +1,6 @@
 # BetweenUs
 
-Web app kỷ niệm cho đúng hai người. Tagline: *Những gì chỉ có giữa chúng mình.*
+Web app kỷ niệm cho hai người.
 
 Chi tiết product, route, và quy ước nằm trong [CLAUDE.md](./CLAUDE.md).
 
